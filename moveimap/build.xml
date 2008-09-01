@@ -1,0 +1,39 @@
+<!-- build configuration -->
+<project name="moveimap" default="compile" basedir=".">
+
+  <!-- things you probably don't want to change -->
+  <property name="app.name"    value="moveimap"/>
+  <property name="src.dir"     value="src/java"/>
+  <property name="deploy.dir"  value="dist"/>
+  <property name="dist.jar"    value="${app.name}.jar"/>
+  <property name="classes.dir" value="${deploy.dir}/classes"/>
+
+  <!-- declare our classpath -->
+  <path id="classpath">
+    <fileset dir="lib" includes="**/*.jar"/>
+    <pathelement location="${classes.dir}"/>
+  </path>
+
+  <!-- prepares the application directories -->
+  <target name="prepare">
+    <mkdir dir="${deploy.dir}"/>
+    <mkdir dir="${classes.dir}"/>
+  </target>
+
+  <!-- cleans out the built application -->
+  <target name="clean">
+    <delete dir="${deploy.dir}"/>
+  </target>
+
+  <!-- build the java class files -->
+  <target name="compile" depends="prepare">
+    <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="on" optimize="off" deprecation="on">
+      <classpath refid="classpath"/>
+    </javac>
+  </target>
+
+  <!-- builds our distribution files (war and jar) -->
+  <target name="dist" depends="prepare,compile">
+    <jar destfile="${deploy.dir}/${dist.jar}" basedir="${classes.dir}"/>
+  </target>
+</project>
