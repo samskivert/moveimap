@@ -3,44 +3,110 @@
 
 package com.samskivert.moveimap;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+import javax.mail.*;
+import javax.mail.internet.*;
+
 /**
  * Migrates messages from one IMAP folder to another, potentially on different servers.
  */
 public class MoveIMAP
 {
     public static void main (String[] args)
+        throws Exception
     {
         if (args.length < 8) {
-            System.err.println("Usage: MoveIMAP srchost username password srcfolder " +
-                               "desthost username password destfolder");
-            System.exit(-1);
+            System.err.println("Usage: MoveIMAP srcurl username password srcfolder " +
+                               "desturl username password destfolder");
+            System.err.println("Server URLs are of the form: imap://hostname/ or imaps://hostname/");
+            System.exit(255);
         }
 
+        Properties props = new Properties();
+        Session session = Session.getInstance(new Properties());
         int idx = 0;
-        IMAPInfo source = new IMAPInfo();
-        source.hostname = args[idx++];
-        source.username = args[idx++];
-        source.password = args[idx++];
-        source.folder = args[idx++];
-        IMAPInfo dest = new IMAPInfo();
-        dest.hostname = args[idx++];
-        dest.username = args[idx++];
-        dest.password = args[idx++];
-        dest.folder = args[idx++];
 
-        System.out.println("Read source " + source);
-        System.out.println("Read dest " + dest);
-    }
+        // open up a connection to our source server
+        Store srcstore = createAndConnect(session, args[idx++], args[idx++], args[idx++]);
+        Folder source = srcstore.getFolder(new URLName(args[idx++]));
 
-    protected static class IMAPInfo
-    {
-        public String hostname;
-        public String username;
-        public String password;
-        public String folder;
+        // and one to our destination server
+        Store dststore = createAndConnect(session, args[idx++], args[idx++], args[idx++]);
+        Folder dest = dststore.getFolder(new URLName(args[idx++]));
 
-        public String toString () {
-            return username + "@" + hostname + ":" + folder;
+        try {
+            source.open(Folder.READ_WRITE);
+        } catch (FolderNotFoundException fnfe) {
+            System.err.println("Unable to find folder '" + source + "' on '" +
+                               srcstore.getURLName() + "'.");
+            System.exit(255);
         }
+
+        try {
+            dest.open(Folder.READ_WRITE);
+        } catch (FolderNotFoundException fnfe) {
+            System.err.println("Unable to find folder '" + dest + "' on '" +
+                               dststore.getURLName() + "'.");
+            System.exit(255);
+        }
+
+        int moved = 0;
+        List<MimeMessage> msgs = new ArrayList<MimeMessage>();
+        List<Integer> msgIds = new ArrayList<Integer>();
+        for (Message msg : source.getMessages()) {
+            if (msg.getFlags().contains(Flags.Flag.DELETED)) {
+                continue; // skip messages marked as deleted
+            }
+            msgs.add(new MimeMessage((MimeMessage)msg));
+            msgIds.add(msg.getMessageNumber());
+            if (msgs.size() == MESSAGE_BATCH_SIZE) {
+                moveMessages(msgs, msgIds, source, dest);
+                moved += msgs.size();
+                msgs.clear();
+                msgIds.clear();
+            }
+        }
+        if (msgs.size() > 0) {
+            moveMessages(msgs, msgIds, source, dest);
+            moved += msgs.size();
+        }
+
+        source.close(false);
+        dest.close(false);
+
+        System.out.println("Moved " + moved + " messages.");
     }
+
+    protected static Store createAndConnect (Session session, String serverURL,
+                                             String username, String password)
+        throws Exception
+    {
+        Store store = session.getStore(new URLName(serverURL));
+        System.out.println("Connecting to IMAP server on '" + serverURL + "'...");
+        store.connect(username, password);
+        return store;
+    }
+
+    protected static void moveMessages (List<MimeMessage> msgs, List<Integer> msgIds,
+                                        Folder source, Folder dest)
+        throws Exception
+    {
+        System.out.println("Moving " + msgs.size() + " messages...");
+
+        // first add the messages to the destination folder
+        dest.appendMessages(msgs.toArray(new MimeMessage[msgs.size()]));
+
+        // and now if that didn't freak out, mark the moved messages as deleted
+        int[] ids = new int[msgIds.size()];
+        int idx = 0;
+        for (int msgId : msgIds) {
+            ids[idx++] = msgId;
+        }
+        source.setFlags(ids, new Flags(Flags.Flag.DELETED), true);
+    }
+
+    protected static final int MESSAGE_BATCH_SIZE = 50;
 }

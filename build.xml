@@ -36,4 +36,19 @@
   <target name="dist" depends="prepare,compile">
     <jar destfile="${deploy.dir}/${dist.jar}" basedir="${classes.dir}"/>
   </target>
+
+  <!-- invokes the program with test arguments -->
+  <target name="test" depends="prepare,compile">
+    <property file="test.properties"/>
+    <java classname="com.samskivert.moveimap.MoveIMAP" classpathref="classpath">
+      <arg value="${source.server_url}"/>
+      <arg value="${source.username}"/>
+      <arg value="${source.password}"/>
+      <arg value="${source.folder}"/>
+      <arg value="${dest.server_url}"/>
+      <arg value="${dest.username}"/>
+      <arg value="${dest.password}"/>
+      <arg value="${dest.folder}"/>
+    </java>
+  </target>
 </project>
