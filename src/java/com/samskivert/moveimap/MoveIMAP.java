@@ -37,19 +37,41 @@ public class MoveIMAP
         Store dststore = createAndConnect(session, args[idx++], args[idx++], args[idx++]);
         Folder dest = dststore.getFolder(new URLName(args[idx++]));
 
+        // first migrate folders with a batch size of 10 to be efficient
+        int moved = migrateFolder(source, dest, 10);
+
+        // then go through and do the remaining one at a time so that all except the breaky ones
+        // are migrated
+        moved += migrateFolder(source, dest, 1);
+
+        System.out.println("Moved " + moved + " messages.");
+    }
+
+    protected static Store createAndConnect (Session session, String serverURL,
+                                             String username, String password)
+        throws Exception
+    {
+        Store store = session.getStore(new URLName(serverURL));
+        System.out.println("Connecting to IMAP server on '" + serverURL + "'...");
+        store.connect(username, password);
+        return store;
+    }
+
+    protected static int migrateFolder (Folder source, Folder dest, int batchSize)
+        throws Exception
+    {
+
         try {
             source.open(Folder.READ_WRITE);
         } catch (FolderNotFoundException fnfe) {
-            System.err.println("Unable to find folder '" + source + "' on '" +
-                               srcstore.getURLName() + "'.");
+            System.err.println("Unable to find folder '" + source + "'.");
             System.exit(255);
         }
 
         try {
             dest.open(Folder.READ_WRITE);
         } catch (FolderNotFoundException fnfe) {
-            System.err.println("Unable to find folder '" + dest + "' on '" +
-                               dststore.getURLName() + "'.");
+            System.err.println("Unable to find folder '" + dest + "'.");
             System.exit(255);
         }
 
@@ -62,7 +84,7 @@ public class MoveIMAP
             }
             msgs.add(new MimeMessage((MimeMessage)msg));
             msgIds.add(msg.getMessageNumber());
-            if (msgs.size() == MESSAGE_BATCH_SIZE) {
+            if (msgs.size() == batchSize) {
                 moveMessages(msgs, msgIds, source, dest);
                 moved += msgs.size();
                 msgs.clear();
@@ -80,17 +102,7 @@ public class MoveIMAP
         source.close(false);
         dest.close(false);
 
-        System.out.println("Moved " + moved + " messages.");
-    }
-
-    protected static Store createAndConnect (Session session, String serverURL,
-                                             String username, String password)
-        throws Exception
-    {
-        Store store = session.getStore(new URLName(serverURL));
-        System.out.println("Connecting to IMAP server on '" + serverURL + "'...");
-        store.connect(username, password);
-        return store;
+        return moved;
     }
 
     protected static void moveMessages (List<MimeMessage> msgs, List<Integer> msgIds,
@@ -116,6 +128,4 @@ public class MoveIMAP
             return;
         }
     }
-
-    protected static final int MESSAGE_BATCH_SIZE = 10;
 }
