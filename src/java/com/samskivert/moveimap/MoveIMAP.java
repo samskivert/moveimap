@@ -100,6 +100,13 @@ public class MoveIMAP
         } catch (FolderNotFoundException fnfe) {
             System.err.println("Unable to find folder '" + dest + "'.");
             System.exit(255);
+        } catch (Exception e) {
+            System.err.println("Error moving messages: " + e);
+            if (e.getCause() != null) {
+                e.getCause().printStackTrace(System.err);
+            } else {
+                e.printStackTrace(System.err);
+            }
         }
 
         // and now if that didn't freak out, mark the moved messages as deleted
