@@ -65,6 +65,9 @@ public class MoveIMAP
             moveMessages(msgs, msgIds, source, dest);
             moved += msgs.size();
         }
+        if (moved > 0) {
+            System.out.println("");
+        }
 
         source.close(false);
 
@@ -108,6 +111,9 @@ public class MoveIMAP
             ids[idx++] = msgId;
         }
         source.setFlags(ids, new Flags(Flags.Flag.DELETED), true);
+
+        System.out.print(".");
+        System.out.flush();
     }
 
     protected static final int MESSAGE_BATCH_SIZE = 100;
