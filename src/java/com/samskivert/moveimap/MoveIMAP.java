@@ -45,6 +45,14 @@ public class MoveIMAP
             System.exit(255);
         }
 
+        try {
+            dest.open(Folder.READ_WRITE);
+        } catch (FolderNotFoundException fnfe) {
+            System.err.println("Unable to find folder '" + dest + "' on '" +
+                               dststore.getURLName() + "'.");
+            System.exit(255);
+        }
+
         int moved = 0;
         List<MimeMessage> msgs = new ArrayList<MimeMessage>();
         List<Integer> msgIds = new ArrayList<Integer>();
@@ -70,6 +78,7 @@ public class MoveIMAP
         }
 
         source.close(false);
+        dest.close(false);
 
         System.out.println("Moved " + moved + " messages.");
     }
@@ -86,43 +95,27 @@ public class MoveIMAP
 
     protected static void moveMessages (List<MimeMessage> msgs, List<Integer> msgIds,
                                         Folder source, Folder dest)
-        throws Exception
     {
-        // first add the messages to the destination folder
         try {
-            dest.open(Folder.READ_WRITE);
-            if (!dest.isOpen()) {
-                System.err.println("Folder not open immediately after being opened? WTF?");
-                System.exit(255);
-            }
+            // first add the messages to the destination folder
             dest.appendMessages(msgs.toArray(new MimeMessage[msgs.size()]));
-            dest.close(false);
 
-        } catch (FolderNotFoundException fnfe) {
-            System.err.println("Unable to find folder '" + dest + "'.");
-            System.exit(255);
+            // and now if that didn't freak out, mark the moved messages as deleted
+            int[] ids = new int[msgIds.size()];
+            int idx = 0;
+            for (int msgId : msgIds) {
+                ids[idx++] = msgId;
+            }
+            source.setFlags(ids, new Flags(Flags.Flag.DELETED), true);
+
+            System.out.print(".");
+            System.out.flush();
 
         } catch (Exception e) {
-            System.err.println("Error moving messages: " + e);
-            if (e.getCause() != null) {
-                e.getCause().printStackTrace(System.err);
-            } else {
-                e.printStackTrace(System.err);
-            }
-            System.exit(255);
+            System.err.println("Error moving messages: " + e.getMessage());
+            return;
         }
-
-        // and now if that didn't freak out, mark the moved messages as deleted
-        int[] ids = new int[msgIds.size()];
-        int idx = 0;
-        for (int msgId : msgIds) {
-            ids[idx++] = msgId;
-        }
-        source.setFlags(ids, new Flags(Flags.Flag.DELETED), true);
-
-        System.out.print(".");
-        System.out.flush();
     }
 
-    protected static final int MESSAGE_BATCH_SIZE = 100;
+    protected static final int MESSAGE_BATCH_SIZE = 10;
 }
