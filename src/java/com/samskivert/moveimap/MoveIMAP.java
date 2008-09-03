@@ -45,14 +45,6 @@ public class MoveIMAP
             System.exit(255);
         }
 
-        try {
-            dest.open(Folder.READ_WRITE);
-        } catch (FolderNotFoundException fnfe) {
-            System.err.println("Unable to find folder '" + dest + "' on '" +
-                               dststore.getURLName() + "'.");
-            System.exit(255);
-        }
-
         int moved = 0;
         List<MimeMessage> msgs = new ArrayList<MimeMessage>();
         List<Integer> msgIds = new ArrayList<Integer>();
@@ -75,7 +67,6 @@ public class MoveIMAP
         }
 
         source.close(false);
-        dest.close(false);
 
         System.out.println("Moved " + moved + " messages.");
     }
@@ -97,7 +88,14 @@ public class MoveIMAP
         System.out.println("Moving " + msgs.size() + " messages...");
 
         // first add the messages to the destination folder
+        try {
+            dest.open(Folder.READ_WRITE);
+        } catch (FolderNotFoundException fnfe) {
+            System.err.println("Unable to find folder '" + dest + "'.");
+            System.exit(255);
+        }
         dest.appendMessages(msgs.toArray(new MimeMessage[msgs.size()]));
+        dest.close(false);
 
         // and now if that didn't freak out, mark the moved messages as deleted
         int[] ids = new int[msgIds.size()];
@@ -108,5 +106,5 @@ public class MoveIMAP
         source.setFlags(ids, new Flags(Flags.Flag.DELETED), true);
     }
 
-    protected static final int MESSAGE_BATCH_SIZE = 50;
+    protected static final int MESSAGE_BATCH_SIZE = 100;
 }
