@@ -97,9 +97,11 @@ public class MoveIMAP
             }
             dest.appendMessages(msgs.toArray(new MimeMessage[msgs.size()]));
             dest.close(false);
+
         } catch (FolderNotFoundException fnfe) {
             System.err.println("Unable to find folder '" + dest + "'.");
             System.exit(255);
+
         } catch (Exception e) {
             System.err.println("Error moving messages: " + e);
             if (e.getCause() != null) {
@@ -107,6 +109,7 @@ public class MoveIMAP
             } else {
                 e.printStackTrace(System.err);
             }
+            System.exit(255);
         }
 
         // and now if that didn't freak out, mark the moved messages as deleted
