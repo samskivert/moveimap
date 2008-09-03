@@ -60,7 +60,6 @@ public class MoveIMAP
     protected static int migrateFolder (Folder source, Folder dest, int batchSize)
         throws Exception
     {
-
         try {
             source.open(Folder.READ_WRITE);
         } catch (FolderNotFoundException fnfe) {
