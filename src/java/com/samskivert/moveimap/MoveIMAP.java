@@ -88,8 +88,6 @@ public class MoveIMAP
                                         Folder source, Folder dest)
         throws Exception
     {
-        System.out.println("Moving " + msgs.size() + " messages...");
-
         // first add the messages to the destination folder
         try {
             dest.open(Folder.READ_WRITE);
