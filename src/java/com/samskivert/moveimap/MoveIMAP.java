@@ -123,8 +123,7 @@ public class MoveIMAP
             System.out.flush();
 
         } catch (Exception e) {
-            System.err.println("Error moving messages: " + e.getMessage());
-            return;
+            System.out.println(e.getMessage());
         }
     }
 }
