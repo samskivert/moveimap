@@ -84,15 +84,17 @@ public class MoveIMAP
             msgs.add(new MimeMessage((MimeMessage)msg));
             msgIds.add(msg.getMessageNumber());
             if (msgs.size() == batchSize) {
-                moveMessages(msgs, msgIds, source, dest);
-                moved += msgs.size();
+                if (moveMessages(msgs, msgIds, source, dest)) {
+                    moved += msgs.size();
+                }
                 msgs.clear();
                 msgIds.clear();
             }
         }
         if (msgs.size() > 0) {
-            moveMessages(msgs, msgIds, source, dest);
-            moved += msgs.size();
+            if (moveMessages(msgs, msgIds, source, dest)) {
+                moved += msgs.size();
+            }
         }
         if (moved > 0) {
             System.out.println("");
@@ -104,8 +106,8 @@ public class MoveIMAP
         return moved;
     }
 
-    protected static void moveMessages (List<MimeMessage> msgs, List<Integer> msgIds,
-                                        Folder source, Folder dest)
+    protected static boolean moveMessages (List<MimeMessage> msgs, List<Integer> msgIds,
+                                           Folder source, Folder dest)
     {
         try {
             // first add the messages to the destination folder
@@ -121,9 +123,11 @@ public class MoveIMAP
 
             System.out.print(".");
             System.out.flush();
+            return true;
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
+            return false;
         }
     }
 }
