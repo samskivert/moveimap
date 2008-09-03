@@ -90,12 +90,16 @@ public class MoveIMAP
         // first add the messages to the destination folder
         try {
             dest.open(Folder.READ_WRITE);
+            if (!dest.isOpen()) {
+                System.err.println("Folder not open immediately after being opened? WTF?");
+                System.exit(255);
+            }
+            dest.appendMessages(msgs.toArray(new MimeMessage[msgs.size()]));
+            dest.close(false);
         } catch (FolderNotFoundException fnfe) {
             System.err.println("Unable to find folder '" + dest + "'.");
             System.exit(255);
         }
-        dest.appendMessages(msgs.toArray(new MimeMessage[msgs.size()]));
-        dest.close(false);
 
         // and now if that didn't freak out, mark the moved messages as deleted
         int[] ids = new int[msgIds.size()];
