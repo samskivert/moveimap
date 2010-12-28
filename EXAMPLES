@@ -1,0 +1,7 @@
+./bin/moveimap imaps://mdb.mail.cs.washington.edu/ mdb UWPASS INBOX imaps://imap.gmail.com/ mdb@cs.washington.edu GOOGPASS '[Gmail]/Inbox'
+
+./bin/moveimap imaps://mdb.mail.cs.washington.edu/ mdb UWPASS mail/received-mail imaps://imap.gmail.com/ mdb@cs.washington.edu GOOGPASS '[Gmail]/All Mail'
+
+./bin/moveimap imaps://mdb.mail.cs.washington.edu/ mdb UWPASS mail/sent-mail imaps://imap.gmail.com/ mdb@cs.washington.edu GOOGPASS '[Gmail]/All Mail'
+
+./bin/moveimap imaps://mdb.mail.cs.washington.edu/ mdb UWPASS mail/sent-mail imaps://imap.gmail.com/ mdb@cs.washington.edu GOOGPASS '[Gmail]/Sent Mail'
