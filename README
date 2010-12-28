@@ -1,0 +1,10 @@
+moveimap is a tool for migrating IMAP email data from one server to
+another.  I wrote it when I did a massive migration of ten years of
+email (about 2 gigs) from my home server into Google Mail.
+
+It's designed to be robust in the face of failures, as you are likely
+to encounter a lot of failures during the multi-day process needed to
+migrate 2GB+ of email into Google Mail.
+
+There are probably much more user friendly tools out there now, but if
+not, give moveimap a whirl.
